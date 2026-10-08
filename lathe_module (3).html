@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Lathe Operation & Processes – Interactive Module</title>
+<style>
+:root{--cream:#f6efdc;--card:#fffaf0;--ink:#3a2f22;--steel:#5b6670;--accent:#b5651d;--ok:#2e7d32;--bad:#b3261e}
+*{box-sizing:border-box}
+body{margin:0;font-family:Georgia,'Segoe UI',serif;color:var(--ink);background-color:var(--cream);
+background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cg fill='none' stroke='%23b5651d' stroke-opacity='.09' stroke-width='2'%3E%3Ccircle cx='40' cy='40' r='18'/%3E%3Ccircle cx='40' cy='40' r='7'/%3E%3Cpath d='M40 14v8M40 58v8M14 40h8M58 40h8M22 22l6 6M52 52l6 6M58 22l-6 6M28 52l-6 6'/%3E%3Crect x='96' y='96' width='44' height='22' rx='3'/%3E%3Cpath d='M96 107h-14M140 107h14M110 96v-10h16v10'/%3E%3C/g%3E%3C/svg%3E")}
+header{background:linear-gradient(90deg,#4a4036,#6b5b49);color:#fff7e6;padding:18px 22px;border-bottom:5px solid var(--accent)}
+header h1{margin:0;font-size:1.35rem}header small{opacity:.8}
+main{max-width:920px;margin:18px auto;padding:0 14px 60px}
+.card{background:var(--card);border:1px solid #e2d3b0;border-radius:12px;padding:18px;margin:14px 0;box-shadow:0 2px 6px #0001}
+label{display:block;font-size:.85rem;margin:8px 0 3px;font-weight:bold}
+input,select{width:100%;padding:9px;border:1px solid #c9b88f;border-radius:7px;background:#fff;font-size:1rem}
+.row{display:grid;grid-template-columns:2fr 2fr 70px;gap:10px}
+button{background:var(--accent);color:#fff;border:0;border-radius:8px;padding:10px 16px;font-size:1rem;cursor:pointer;margin:6px 6px 0 0}
+button.alt{background:var(--steel)}button:disabled{opacity:.5}
+.mods{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px}
+.mod{border:1px solid #d8c79c;border-radius:10px;padding:12px;background:#fff}
+.mod b{color:var(--accent)}.done{border-color:var(--ok);background:#f1f8ec}
+.lec h3{color:var(--accent);margin:14px 0 4px}.lec li{margin:3px 0}
+.q{margin:14px 0;padding:10px;border-left:4px solid var(--accent);background:#fff}
+.q label{font-weight:normal;display:flex;gap:8px;align-items:flex-start;cursor:pointer;margin:4px 0}.q input{width:auto}
+iframe{width:100%;aspect-ratio:16/9;border:0;border-radius:8px}
+.hide{display:none}.wm{position:fixed;inset:0;pointer-events:none;display:flex;align-items:center;justify-content:center;font-size:4.2rem;font-weight:bold;color:#3a2f2214;transform:rotate(-25deg);z-index:5}
+.timer{position:sticky;top:0;background:#4a4036;color:#fff;padding:6px 12px;border-radius:8px;z-index:6}
+.warn{background:#fff3cd;border:1px solid #e6c35c;padding:8px;border-radius:8px;font-size:.9rem}
+</style></head><body>
+<div class="wm">RAYMOND D. ENTAL</div>
+<header><h1>⚙ Lathe Operation & Processes – Mechanical Technology</h1><small>Interactive Module · Lecture · Video · Topic Quiz</small>
+<button class="alt" style="float:right;margin-top:-34px" onclick="adminLogin()">Admin</button></header>
+<main>
+
+<!-- ===================== CONFIGURATION ===================== -->
+<script>
+/* ████████████████████████████████████████████████████████████████████
+   ██  PASTE YOUR APPS SCRIPT WEB APP URL HERE (the one ending in /exec)
+   ██  (Your Google Sheet link goes inside Code.gs, NOT here.)
+   ████████████████████████████████████████████████████████████████████ */
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzCAT_0f1ABxQOCFBLu-82f5rcG6QtTuka7C9nm0AKgWIKYsKbebho0E-VUyBO3X_-CsA/exec";
+/* ████████████████████████████████████████████████████████████████████ */
+const DEFAULT_PW = "RDE_2026";   // admin can change it inside the Admin panel
+</script>
+
+<section id="reg" class="card">
+<h2>Student Information</h2>
+<div class="row"><div><label>Last Name</label><input id="ln"></div><div><label>First Name</label><input id="fn"></div><div><label>M.I.</label><input id="mi" maxlength="2"></div></div>
+<label>Valid Email Address</label><input id="em" type="email" placeholder="name@gmail.com">
+<label>Section</label><input id="sec" placeholder="e.g. 1A">
+<button onclick="saveInfo()">Save / Update Information</button>
+<span id="regmsg"></span>
+</section>
+
+<section id="home" class="hide"><div class="card"><h2>Modules <small id="who"></small></h2>
+<p class="warn">Take one topic at a time. Each quiz has 10 items. <b>Do not switch tabs or windows during a quiz – it will close automatically.</b></p>
+<div class="mods" id="mods"></div></div></section>
+
+<section id="lecture" class="hide card"></section>
+<section id="quiz" class="hide card"></section>
+
+<section id="admin" class="hide card">
+<h2>Admin Panel</h2>
+<label>Apps Script Web App URL (overrides the one in code)</label><input id="adurl">
+<label>Change Admin Password</label><input id="adpw" type="password" placeholder="new password">
+<h3>YouTube Links (paste a watch / youtu.be / embed link per module)</h3><div id="adyt"></div>
+<button onclick="adminSave()">Save Settings</button><button class="alt" onclick="exportCSV()">Export Local Records (CSV)</button><button class="alt" onclick="show('reg')">Close</button>
+<pre id="adlog" style="white-space:pre-wrap;font-size:.8rem"></pre>
+</section>
+</main>
+
+<script>
+/* ============ CONTENT: LECTURE + VIDEO + QUESTION BANK ============ */
+/* Questions: [question, CORRECT answer, wrong1, wrong2, wrong3] – 12 per module; 10 are drawn per student */
+const M=[
+{id:"II",t:"Occupational Health and Safety Practices",yt:"https://www.youtube.com/results?search_query=machine+shop+safety+lathe",
+L:[["2.1 Laboratory Safety Rules and Policies in Machine Shop",["Wear PPE: safety goggles, work shoes, close-fitting shop apron or coverall.","Remove rings, watches, neckties; tie long hair; no loose clothing.","Know the location of the emergency stop, fire extinguisher and first-aid kit.","Never operate a machine without instructor permission or while distracted.","Keep floors clean and dry; keep aisles free; return tools after use.","Report every accident or injury immediately to the instructor."]],
+["2.2 Identification of Workshop Hazards",["Hazard = any source of potential harm. Types: mechanical (rotating parts, flying chips), electrical, chemical (cutting oils, solvents), physical (noise, heat), and housekeeping (slips, trips, falls).","Hot, sharp chips and flying particles can injure eyes and skin.","Spilled oil or coolant causes slips; poor lighting and clutter cause accidents."]],
+["2.3 Lathe Safety Precautions",["Remove the chuck key before starting the lathe.","Stop the machine before measuring, adjusting, cleaning or changing tools.","Never wear gloves near rotating parts; never brake the chuck by hand.","Use a brush or chip hook (never bare hands) to remove chips.","Secure the workpiece and keep tool overhang short.","Keep eyes on the work; stand clear of the chuck's line of ejection."]]],
+Q:[["Before operating a machine you should","wear proper PPE and know where the emergency stop is","start first then ask the instructor","remove the guards for visibility","wear loose clothing for comfort"],
+["Required eye protection in the machine shop is","safety goggles or glasses with side shields","sunglasses","reading glasses only","none if the work is short"],
+["Chips should be removed using","a brush or chip hook after the machine stops","bare hands","a rag while the work spins","your sleeve"],
+["Before operating a lathe, rings, watches and neckties should be","removed or secured","worn but tucked in","worn if small","covered by gloves"],
+["A hazard is","a source of potential harm or injury","an accident that already happened","a type of PPE","a shop schedule"],
+["A spilled oil on the shop floor is mainly a","slip and fall hazard","radiation hazard","noise hazard","optical hazard"],
+["The main hazard of a rotating chuck and workpiece is","entanglement","magnetism","dehydration","glare"],
+["Before measuring a workpiece on a lathe you must","stop the machine","reduce the speed","wear gloves","shout a warning"],
+["The chuck key must be","removed before starting the lathe","left in the chuck","placed on the tailstock","kept in the pocket while running"],
+["Gloves while operating a lathe are","not allowed because they can be caught","required at all times","allowed for finishing only","allowed with short sleeves"],
+["Upon any injury in the shop you should","report to the instructor immediately","hide it","continue working","tell a classmate later"],
+["Long hair near a lathe should be","tied or covered","left loose","tucked in a collar only","ignored if short work"]]},
+
+{id:"III",t:"Vernier Caliper",yt:"https://www.youtube.com/results?search_query=how+to+read+vernier+caliper",
+L:[["3.1 Parts and Function of the Vernier Caliper",["Beam / main scale – carries the fixed graduations (mm or inch).","Fixed jaw and movable (sliding) jaw – outside jaws measure outside diameters and lengths.","Inside (upper) jaws – measure inside diameters and slot widths.","Depth rod – measures depth of holes and steps.","Vernier scale – slides along the beam to read fractions of the smallest main division.","Locking screw – holds the reading; thumb screw/roller – moves the slide smoothly."]],
+["3.2 Principles of Vernier Caliper Measurements",["Least Count (LC) = smallest main scale division ÷ number of vernier divisions.","Metric: 1 mm ÷ 20 = 0.05 mm; 1 mm ÷ 50 = 0.02 mm. Inch: 0.025 in ÷ 25 = 0.001 in.","Reading = main scale reading (left of vernier zero) + (coinciding vernier line × LC).","Example: 24 mm + (7 × 0.02) = 24.14 mm.","Close the jaws to check zero, clean the jaws, and measure with light, square contact."]]],
+Q:[["The part that slides along the beam is the","movable jaw / slide","fixed jaw","depth rod","beam"],
+["The depth rod is used to measure","depth of holes and steps","outside diameters","taper angles","thread pitch"],
+["The upper (inside) jaws measure","inside diameters","outside diameters only","depth only","surface finish"],
+["The locking screw is used to","hold the reading","zero the scale","clean the jaws","adjust the beam"],
+["Least count is computed as","smallest main division ÷ number of vernier divisions","main division × vernier divisions","vernier reading − main reading","jaw length ÷ 10"],
+["A vernier with 50 divisions on a 1 mm main scale has an LC of","0.02 mm","0.05 mm","0.10 mm","0.50 mm"],
+["A vernier with 20 divisions on a 1 mm main scale has an LC of","0.05 mm","0.02 mm","0.20 mm","0.01 mm"],
+["Main scale 24 mm, 7th vernier line coincides, LC 0.02 mm. The reading is","24.14 mm","24.07 mm","24.70 mm","31.00 mm"],
+["Main scale 31 mm, 12th vernier line coincides, LC 0.05 mm. The reading is","31.60 mm","31.12 mm","32.20 mm","31.06 mm"],
+["The LC of an inch vernier (0.025 in ÷ 25) is","0.001 in","0.01 in","0.025 in","0.0001 in"],
+["Before measuring you should","close the jaws and check for zero error","oil the jaws","open the jaws fully","tighten the depth rod"],
+["The main scale reading is taken","just left of the vernier zero line","just right of the vernier zero","at the last vernier line","from the depth rod"]]},
+
+{id:"IV",t:"Lathe Accessories",yt:"https://www.youtube.com/results?search_query=lathe+accessories+chucks+tool+post",
+L:[["4.1 Lathe Work-Holding Devices",["3-jaw universal chuck – self-centering; holds round and hexagonal stock quickly.","4-jaw independent chuck – each jaw moves separately; holds square, irregular or off-center work.","Collet chuck – accurate holding of small-diameter bar stock.","Faceplate – bolts/clamps large or irregular work.","Between centers: live center, dead center, lathe dog and drive plate.","Mandrel – holds bored work for turning the outside; steady and follower rests support long slender work."]],
+["4.2 Lathe Cutting-Tool Holding Devices",["Straight, left-offset and right-offset toolholders hold HSS tool bits.","Quick-change tool post – fast tool change and height adjustment.","Four-way turret tool post – holds up to four tools at once.","Boring bar holder – used for internal work."]],
+["4.3 Compound Rest Tooling System",["Mounted on the cross slide on a swivel base graduated in degrees.","Swiveled to cut short tapers, chamfers and to feed at an angle.","Set at about 29–29.5° for cutting threads.","Gives fine hand feed and controls depth of cut for threading."]]],
+Q:[["A self-centering chuck is the","3-jaw universal chuck","4-jaw independent chuck","faceplate","mandrel"],
+["Square or irregular stock is best held in the","4-jaw independent chuck","3-jaw chuck","collet","live center"],
+["Large irregular work is bolted to the","faceplate","collet chuck","steady rest","tool post"],
+["A lathe dog and drive plate are used to","drive work held between centers","hold tool bits","measure taper","cut threads"],
+["Small-diameter bar stock is held accurately by a","collet chuck","faceplate","follower rest","turret"],
+["A mandrel is used to","hold bored work for turning the outside","hold the tool bit","support long work","measure runout"],
+["A steady rest is clamped on the","lathe ways","cross slide","tool post","tailstock ram"],
+["A follower rest is attached to the","carriage","bed end","headstock","tailstock"],
+["The quick-change tool post allows","fast tool change and height adjustment","faster spindle speed","automatic feeding","tapered turning only"],
+["A four-way turret tool post holds up to","four tools","two tools","six tools","one tool"],
+["The compound rest is mounted on the","cross slide","tailstock","headstock","bed"],
+["For thread cutting the compound rest is set at about","29.5°","90°","45°","0°"]]},
+
+{id:"V",t:"Lathe Cutting Tools",yt:"https://www.youtube.com/results?search_query=lathe+tool+bit+grinding+angles",
+L:[["5.1 Cutting Tool Materials",["Carbon tool steel – cheap, loses hardness at low heat; low speeds.","High-speed steel (HSS) – keeps hardness at high temperature (red hardness); most common tool bit.","Cast alloys (e.g. Stellite) – between HSS and carbide in speed.","Cemented carbide – very hard, high cutting speeds, brittle.","Ceramic and diamond – very high speed finishing; brittle and costly."]],
+["5.2 Lathe Tool Bit Angles and Clearances",["Back rake – slope of the top face toward the shank; helps chip flow.","Side rake – slope across the top face; directs chips away.","End relief (front clearance) – keeps the front of the tool from rubbing.","Side relief – lets the tool feed into the work without rubbing.","End and side cutting-edge angles and nose radius affect finish and strength."]],
+["5.3 Procedure for Grinding Lathe Cutting Tools",["Wear goggles; check wheel condition; set the tool rest close to the wheel.","Grind side cutting edge and side relief, then nose radius, end relief, and top rake.","Hold the tool lightly, move across the wheel face, avoid overheating.","Dip HSS in water to cool often; do not quench carbide (it cracks).","Check angles with a gauge and hone the cutting edge lightly with an oilstone."]]],
+Q:[["The tool material that keeps hardness at red heat is","high-speed steel","carbon tool steel","mild steel","cast iron"],
+["Carbon tool steel is suited for","low cutting speeds","very high speeds","ceramic finishing","deep boring only"],
+["Cemented carbide is","very hard but brittle","soft and tough","cheap and soft","non-metallic fiber"],
+["Cast alloys such as Stellite work at speeds","between HSS and carbide","below carbon steel","above diamond","equal to mild steel"],
+["Back rake controls","chip flow along the top face","front rubbing","nose size","tool shank length"],
+["Side rake mainly","directs chips away from the cutting edge","reduces end clearance","sets tool height","adds nose radius"],
+["End relief prevents","the front of the tool from rubbing the work","chip curling","tool overheating in the holder","tool breakage at the shank"],
+["Side relief allows the tool to","feed into the work without rubbing","rotate faster","grind itself","measure the work"],
+["While grinding HSS, the tool should be","cooled by dipping in water often","quenched when red","ground dry without pause","held far from the wheel"],
+["Carbide tools should not be","quenched in water when hot","ground at all","used on steel","honed"],
+["The first safety step before grinding is to","wear goggles and check the wheel","remove the tool rest","start at full pressure","remove the wheel guard"],
+["After grinding, the cutting edge is lightly","honed with an oilstone","hammered","quenched in oil","filed with a rasp"]]},
+
+{id:"VI",t:"Mounting and Removing Lathe Chucks and Centers",yt:"https://www.youtube.com/results?search_query=how+to+mount+and+remove+lathe+chuck",
+L:[["6.1 To Mount Lathe Chucks and Centers",["Place a wooden board across the ways to protect them.","Clean the spindle nose and the chuck threads or taper.","Threaded spindle: screw on by hand until seated against the shoulder; do not force.","Cam-lock spindle: align chuck and spindle marks, then tighten cam locks with the key.","Centers: wipe the Morse taper and bore, then push the center firmly into the bore."]],
+["6.2 To Remove Lathe Chucks and Centers",["Stop the machine, put the board on the ways, lock the spindle.","Threaded chuck: turn counter-clockwise by hand while supporting its weight.","Cam-lock: loosen cam locks and withdraw the chuck.","Tailstock center: back the ram with the handwheel until the center ejects.","Headstock center: tap out with a knockout bar through the spindle bore. Never use power to remove a chuck."]]],
+Q:[["Before mounting a chuck, place on the ways a","wooden board","steel plate","rag soaked in oil","tool bit"],
+["The spindle nose and chuck threads should be","cleaned before mounting","oiled heavily","painted","left dirty"],
+["A threaded chuck is screwed on until it","seats against the shoulder without forcing","is hammered tight","runs loose","is aligned by marks"],
+["For a cam-lock chuck, you first","align the marks on chuck and spindle","hammer the chuck on","unscrew the cams fully","start the machine"],
+["A threaded chuck is removed by turning it","counter-clockwise with the spindle locked","clockwise under power","with a hammer only","while the lathe runs"],
+["Power should never be used to","remove a chuck","turn the handwheel","clean chips","apply coolant"],
+["Before inserting a center, wipe the","Morse taper and bore","chuck jaws only","bed ways only","tool post"],
+["A center is mounted in the tailstock by","pushing it firmly into the tapered bore","gluing it","bolting it","striking it with a hammer"],
+["A tailstock center is ejected by","backing the ram with the handwheel","hitting it from the front","loosening the chuck","using the carriage"],
+["A headstock center is removed using a","knockout bar through the spindle bore","hammer on the nose","file","vernier caliper"],
+["The Morse taper holds the center by","friction in a self-holding taper","threads","keys","clamps"],
+["Dirt on the taper causes","center runout and inaccuracy","faster cutting","better finish","longer tool life"]]},
+
+{id:"VII",t:"Centering Workpieces",yt:"https://www.youtube.com/results?search_query=centering+workpiece+4+jaw+chuck+dial+indicator",
+L:[["7.1 Surface Gauge Method",["Used on a 4-jaw independent chuck for rough centering.","Set the scriber point to the tip of the lathe center or the work's center mark.","Rotate the work by hand and watch the gap between scriber and surface.","Adjust the jaws in opposite pairs until the gap stays constant."]],
+["7.2 Dial Indicator Method",["More accurate than the surface gauge.","Mount the indicator on a magnetic base or tool post; stylus touches the work with slight preload.","Rotate the chuck by hand and read total indicator runout (TIR).","Correct about half of the TIR by loosening one jaw and tightening the opposite one.","Repeat until the needle shows minimal movement."]]],
+Q:[["The surface gauge method is commonly used with the","4-jaw independent chuck","collet only","faceplate only","drill press"],
+["In the surface gauge method the scriber is set to","the tip of the lathe center","the chuck face","the tool post","the tailstock handle"],
+["During centering the work is rotated","by hand","at top speed","by the carriage","by the tailstock"],
+["Jaws of a 4-jaw chuck are adjusted","in opposite pairs","all at once","only one side","after starting the machine"],
+["The more accurate centering method is the","dial indicator method","visual guess","surface gauge","ruler method"],
+["A dial indicator is held on a","magnetic base","tailstock quill only","drill chuck","scriber"],
+["TIR stands for","total indicator runout","tool inside radius","turning in rotation","torque indicator reading"],
+["If TIR is 0.20 mm, you should correct about","half of it (0.10 mm)","all of it at once","double it","none of it"],
+["To move the work in a 4-jaw chuck you","loosen one jaw and tighten the opposite","tighten all jaws equally","loosen all jaws","use the cross slide"],
+["Centering ensures the work","rotates concentrically","is shorter","is polished","is hotter"],
+["The indicator stylus should touch the work with","slight preload","heavy pressure","no contact","coolant on it"],
+["Centering is done with the machine","off, turning the chuck by hand","at maximum speed","in reverse","with the feed engaged"]]},
+
+{id:"VIII",t:"Facing Workpieces",yt:"https://www.youtube.com/results?search_query=lathe+facing+center+drilling+chamfering",
+L:[["8.1 Spot Facing",["Machining a small flat area (seat) for a bolt head, nut or washer."]],
+["8.2 Facing Workpiece to the Required Length",["Facing = machining the end flat and square (perpendicular) to the axis using the cross slide.","Set the tool exactly at center height to avoid a center pip.","Face one end first, then measure from it and face the other end to length."]],
+["8.3 Purpose of Center Drilling",["Makes a conical seat so the live or dead center supports the work.","A center drill (combination drill and countersink) has a 60° included angle."]],
+["8.4 Chamfering to a Specified Angle; Planes of Movement / Locating the Work",["Chamfer = bevel on an edge, removes burrs and sharp corners; 45° is common.","Swivel the compound rest or use a ground tool to cut the angle.","Planes of movement: longitudinal (carriage, along the axis) and transverse (cross slide, across the axis).","Locate the work by touching the tool to the surface, zeroing the dial, then setting depth."]]],
+Q:[["Spot facing produces","a flat seat for a bolt head or washer","a thread","a taper","a knurled surface"],
+["Facing is machining the end of the work","perpendicular to the axis","parallel to the axis","at 60°","in a spiral"],
+["Facing is done mainly with the","cross slide","tailstock","compound only for length","carriage handwheel only"],
+["If the tool is not at center height, facing leaves","a center pip","a thread","a chamfer","a knurl"],
+["To face to length, you","face one end then measure and face the other","face both ends without measuring","drill first","chamfer first"],
+["The purpose of center drilling is to","provide a conical seat for the lathe center","make a through hole","cut threads","deburr the edge"],
+["A center drill has an included angle of","60°","90°","118°","29°"],
+["A chamfer is","a bevel on an edge","a thread","a groove","a taper pin"],
+["Chamfering removes","burrs and sharp edges","all material","the center","the chuck jaws"],
+["A common chamfer angle is","45°","10°","75°","120°"],
+["Longitudinal movement is done by the","carriage","cross slide","tailstock only","chuck"],
+["Transverse movement is done by the","cross slide","carriage","bed","headstock"]]},
+
+{id:"IX",t:"Parallel Turning",yt:"https://www.youtube.com/results?search_query=lathe+parallel+turning+rough+finish+shoulder",
+L:[["9.1 Setting Up a Cutting Tool",["Set the tool tip at center height (on the center line).","Keep tool overhang as short as possible for rigidity.","Set the tool square to the work and clamp the tool post firmly."]],
+["9.2 Rough Turning and Finish Turning",["Rough turning – heavy depth of cut and coarse feed to remove stock quickly; leave about 0.5 mm for finishing.","Finish turning – light depth of cut, fine feed, sharp tool, to get exact size and smooth surface.","Diameter reduces by twice the depth of cut. Measure with a vernier caliper between cuts."]],
+["9.3 Kinds of Shoulder",["Square shoulder – 90° corner.","Filleted (rounded) shoulder – stronger, reduces stress concentration.","Angular (beveled) shoulder – sloped corner; chamfered transition."]]],
+Q:[["The cutting tool tip is set","at center height","above the chuck","below the bed","at the tailstock"],
+["Tool overhang should be","as short as possible","as long as possible","half the bar","unimportant"],
+["The tool is set","square to the work","at random","pointing at the chuck","upside down"],
+["Rough turning is used to","remove stock quickly","get the final finish","cut threads","center the work"],
+["How much stock is usually left for finishing?","about 0.5 mm","about 10 mm","none","about 5 cm"],
+["Finish turning uses","light cut and fine feed","heavy cut and coarse feed","no coolant ever","a blunt tool"],
+["A cut of 1 mm depth reduces the diameter by","2 mm","1 mm","0.5 mm","4 mm"],
+["A 90° corner at a step is a","square shoulder","filleted shoulder","angular shoulder","taper"],
+["A rounded corner at a step is a","filleted shoulder","square shoulder","angular shoulder","center shoulder"],
+["A beveled or sloped corner is a","angular shoulder","square shoulder","filleted shoulder","flat shoulder"],
+["A filleted shoulder is preferred because it","reduces stress concentration","is easiest to cut","is weaker","uses less steel"],
+["Between cuts, the diameter is checked with a","vernier caliper","tape measure","scriber","dial test"]]}
+];
+
+/* ================= UTILITIES ================= */
+const $=id=>document.getElementById(id),LS=localStorage;
+const get=(k,d)=>{try{return JSON.parse(LS.getItem(k))??d}catch(e){return d}};
+const set=(k,v)=>LS.setItem(k,JSON.stringify(v));
+const show=id=>{["reg","home","lecture","quiz","admin"].forEach(s=>$(s).classList.add("hide"));$(id).classList.remove("hide");if(id=="reg")$("home").classList.toggle("hide",!stu);if(id=="reg"&&stu)$("home").classList.remove("hide")};
+function hash(s){let h=1779033703^s.length;for(let i=0;i<s.length;i++){h=Math.imul(h^s.charCodeAt(i),3432918353);h=h<<13|h>>>19}return h>>>0}
+function rng(seed){let a=seed>>>0;return()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+function shuf(arr,r){const a=arr.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(r()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+const stamp=()=>new Date().toLocaleString("en-PH",{dateStyle:"medium",timeStyle:"medium"});
+let stu=get("stu",null),cur=null;
+function ytEmbed(u){let m=u.match(/(?:v=|youtu\.be\/|embed\/)([\w-]{11})/);return m?"https://www.youtube.com/embed/"+m[1]:null}
+const ytLinks=()=>Object.assign({},...M.map(m=>({[m.id]:m.yt})),get("yt",{}));
+
+/* ================= STUDENT INFO ================= */
+function fillInfo(){if(!stu)return;$("ln").value=stu.last;$("fn").value=stu.first;$("mi").value=stu.mi;$("em").value=stu.email;$("sec").value=stu.section}
+function saveInfo(){
+ const s={last:$("ln").value.trim(),first:$("fn").value.trim(),mi:$("mi").value.trim().toUpperCase(),email:$("em").value.trim().toLowerCase(),section:$("sec").value.trim()};
+ if(!s.last||!s.first||!s.mi||!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(s.email)||!s.section){$("regmsg").textContent="⚠ Complete all fields with a valid email.";return}
+ stu=s;set("stu",s);$("regmsg").textContent="✔ Saved";render();$("home").classList.remove("hide")}
+const skey=m=>"rec_"+stu.email+"_"+m;
+function render(){
+ $("who").textContent=" — "+stu.last+", "+stu.first+" "+stu.mi+".";
+ $("mods").innerHTML=M.map((m,i)=>{const r=get(skey(m.id),{attempts:0,best:null});
+ return `<div class="mod ${r.best!==null?'done':''}"><b>${m.id}.</b> ${m.t}<br><small>Attempts: ${r.attempts} · Best: ${r.best===null?'—':r.best+'/10'}</small><br><button onclick="openLecture(${i})">📖 Lecture & Video</button><button class="alt" onclick="startQuiz(${i})">📝 Quiz</button></div>`}).join("")}
+
+/* ================= LECTURE ================= */
+function openLecture(i){const m=M[i],u=ytLinks()[m.id],e=ytEmbed(u);
+ $("lecture").innerHTML=`<h2>${m.id}. ${m.t}</h2><div class="lec">`+m.L.map(s=>`<h3>${s[0]}</h3><ul>${s[1].map(x=>`<li>${x}</li>`).join("")}</ul>`).join("")+
+ `</div><h3>🎥 Video (for educational purposes)</h3>`+(e?`<iframe src="${e}" allowfullscreen></iframe>`:`<a href="${u}" target="_blank" rel="noopener"><button>▶ Watch related videos on YouTube</button></a>`)+
+ `<br><button onclick="startQuiz(${i})">Take Quiz</button><button class="alt" onclick="show('home')">Back</button>`;show("lecture")}
+
+/* ================= QUIZ ================= */
+function startQuiz(i){
+ if(!stu){alert("Save your student information first.");return}
+ const m=M[i],r=get(skey(m.id),{attempts:0,best:null});r.attempts++;set(skey(m.id),r);
+ const rd=rng(hash(stu.email+stu.last+stu.first+m.id+"#"+r.attempts));
+ const items=shuf(m.Q,rd).slice(0,10).map(q=>{const opts=shuf(q.slice(1),rd);return{q:q[0],opts,ans:q[1]}});
+ cur={i,m,items,attempt:r.attempts,start:Date.now(),startStamp:stamp(),picks:{},closed:false};
+ $("quiz").innerHTML=`<div class="timer">Module ${m.id}: ${m.t} · Attempt ${cur.attempt} · <span id="tm">00:00</span></div><p class="warn">⚠ Do not switch tabs/windows. The quiz closes and is submitted automatically.</p>`+
+ items.map((x,n)=>`<div class="q"><b>${n+1}.</b> ${x.q}${x.opts.map((o,k)=>`<label><input type="radio" name="q${n}" onchange="cur.picks[${n}]=${k}">${o}</label>`).join("")}</div>`).join("")+
+ `<button onclick="finish('Completed')">Submit Quiz</button>`;
+ show("quiz");cur.tick=setInterval(()=>{const s=Math.floor((Date.now()-cur.start)/1000);$("tm").textContent=String(Math.floor(s/60)).padStart(2,"0")+":"+String(s%60).padStart(2,"0")},1000)}
+document.addEventListener("visibilitychange",()=>{if(document.hidden&&cur&&!cur.closed)finish("Closed – tab switched")});
+window.addEventListener("blur",()=>{if(cur&&!cur.closed)finish("Closed – window lost focus")});
+
+function finish(status){
+ if(!cur||cur.closed)return;cur.closed=true;clearInterval(cur.tick);
+ const c=cur,end=stamp(),secs=Math.round((Date.now()-c.start)/1000);let score=0;
+ const lines=c.items.map((x,n)=>{const p=c.picks[n]!==undefined?x.opts[c.picks[n]]:"(no answer)";const ok=p===x.ans;if(ok)score++;return{n:n+1,q:x.q,p,a:x.ans,ok}});
+ const r=get(skey(c.m.id),{attempts:c.attempt,best:null});r.best=Math.max(r.best??0,score);set(skey(c.m.id),r);
+ const rec={timestamp:end,last:stu.last,first:stu.first,mi:stu.mi,email:stu.email,section:stu.section,module:c.m.id+". "+c.m.t,attempt:c.attempt,score,status,seconds:secs,
+  key:lines.map(l=>l.n+") Ans: "+l.p+" | Key: "+l.a+(l.ok?" ✔":" ✘")).join(" ; ")};
+ const log=get("log",[]);log.push(rec);set("log",log);
+ const url=get("url","")||SCRIPT_URL;
+ if(url.startsWith("http"))fetch(url,{method:"POST",mode:"no-cors",headers:{"Content-Type":"text/plain"},body:JSON.stringify(rec)}).catch(()=>{});
+ makeImage(c,lines,score,status,end);
+ $("quiz").innerHTML=`<h2>${status==="Completed"?"Quiz Finished":"⚠ Quiz Closed"}</h2><p>${status}</p><h3>Score: ${score}/10 · Attempt ${c.attempt}</h3><p>Submitted: ${end}</p><p>Your result picture was downloaded automatically.</p><button onclick="render();show('home')">Back to Modules</button>`;
+ show("quiz");cur=null}
+
+function wrap(ctx,t,x,y,w,lh){const ws=t.split(" ");let l="";for(const w2 of ws){const tt=l+w2+" ";if(ctx.measureText(tt).width>w&&l){ctx.fillText(l,x,y);y+=lh;l=w2+" "}else l=tt}ctx.fillText(l,x,y);return y+lh}
+function makeImage(c,lines,score,status,end){
+ const cv=document.createElement("canvas");cv.width=1000;cv.height=500+lines.length*140;const x=cv.getContext("2d");
+ x.fillStyle="#f6efdc";x.fillRect(0,0,cv.width,cv.height);x.fillStyle="#4a4036";x.fillRect(0,0,1000,80);
+ x.fillStyle="#fff7e6";x.font="bold 26px Georgia";x.fillText("⚙ Lathe Operation & Processes – Quiz Result",24,50);
+ x.fillStyle="#3a2f22";x.font="bold 20px Georgia";let y=120;
+ [`Student: ${stu.last}, ${stu.first} ${stu.mi}.   Section: ${stu.section}`,`Email: ${stu.email}`,`Module ${c.m.id}. ${c.m.t}`,`Attempt No.: ${c.attempt}    Score: ${score}/10    Status: ${status}`,`Time Stamp: Started ${c.startStamp}  |  Submitted ${end}`].forEach(t=>{x.fillText(t,24,y);y+=32});
+ y+=10;x.font="bold 20px Georgia";x.fillText("Answer Key",24,y);y+=30;x.font="16px Georgia";
+ lines.forEach(l=>{x.fillStyle="#3a2f22";y=wrap(x,l.n+". "+l.q,24,y,950,22);x.fillStyle=l.ok?"#2e7d32":"#b3261e";y=wrap(x,(l.ok?"✔ ":"✘ ")+"Your answer: "+l.p,40,y,930,22);if(!l.ok){x.fillStyle="#2e7d32";y=wrap(x,"Correct answer: "+l.a,40,y,930,22)}y+=6});
+ const f=document.createElement("canvas");f.width=1000;f.height=Math.max(y+40,600);const g=f.getContext("2d");g.drawImage(cv,0,0);
+ g.save();g.globalAlpha=.13;g.fillStyle="#3a2f22";g.font="bold 60px Georgia";g.rotate(-.4);for(let yy=0;yy<f.height+800;yy+=220)for(let xx=-400;xx<f.width+400;xx+=620)g.fillText("RAYMOND D. ENTAL",xx,yy);g.restore();
+ const a=document.createElement("a");a.download=`Lathe_${c.m.id}_${stu.last}_${stu.first}_attempt${c.attempt}.png`;a.href=f.toDataURL("image/png");document.body.appendChild(a);a.click();a.remove()}
+
+/* ================= ADMIN ================= */
+function adminLogin(){const p=prompt("Admin password:");if(p===null)return;
+ if(p!==get("pw",DEFAULT_PW)){alert("Wrong password");return}
+ $("adurl").value=get("url","")||SCRIPT_URL;const y=ytLinks();
+ $("adyt").innerHTML=M.map(m=>`<label>${m.id}. ${m.t}</label><input id="y_${m.id}" value="${y[m.id]}">`).join("");
+ const log=get("log",[]);$("adlog").textContent="Records on this device: "+log.length+"\n"+log.slice(-15).map(r=>`${r.timestamp} | ${r.last}, ${r.first} | ${r.module} | att ${r.attempt} | ${r.score}/10 | ${r.status}`).join("\n");show("admin")}
+function adminSave(){set("url",$("adurl").value.trim());if($("adpw").value.trim())set("pw",$("adpw").value.trim());
+ const y={};M.forEach(m=>y[m.id]=$("y_"+m.id).value.trim());set("yt",y);$("adpw").value="";alert("Settings saved on this device.")}
+function exportCSV(){const l=get("log",[]);const h=["timestamp","last","first","mi","email","section","module","attempt","score","status","seconds","key"];
+ const csv=[h.join(",")].concat(l.map(r=>h.map(k=>'"'+String(r[k]).replace(/"/g,'""')+'"').join(","))).join("\n");
+ const a=document.createElement("a");a.href="data:text/csv;charset=utf-8,"+encodeURIComponent(csv);a.download="lathe_records.csv";a.click()}
+
+fillInfo();if(stu){render();$("home").classList.remove("hide")}
+</script></body></html>
